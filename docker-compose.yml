@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+
+  # Using Redis Cloud instead of local Redis
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: foodo-redis
+  #   restart: always
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   networks:
+  #     - foodo-network
+
+  # NestJS API server
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: foodo-api
+    restart: always
+    ports:
+      - "8002:8000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+      - PORT=8000
+    # Using Redis Cloud instead of local Redis
+    # depends_on:
+    #   - redis
+    networks:
+      - foodo-network
+
+  # Order dispatch service (Go)
+  order-dispatch:
+    build:
+      context: ./go-services/order-dispatch
+      dockerfile: Dockerfile
+    container_name: foodo-order-dispatch
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - REDIS_ADDR=redis-18764.c292.ap-southeast-1-1.ec2.redns.redis-cloud.com:18764
+      - REDIS_PASSWORD=dljBc2IR2S1CPZyZMBBtFDb8nwYxhkwb
+      - REDIS_USERNAME=default
+    networks:
+      - foodo-network
+
+  # Location tracker service (Go)
+  location-tracker:
+    build:
+      context: ./go-services/location-tracker
+      dockerfile: Dockerfile
+    container_name: foodo-location-tracker
+    restart: always
+    ports:
+      - "8083:8081"
+    environment:
+      - PORT=8081
+      - REDIS_ADDR=redis-18764.c292.ap-southeast-1-1.ec2.redns.redis-cloud.com:18764
+      - REDIS_PASSWORD=dljBc2IR2S1CPZyZMBBtFDb8nwYxhkwb
+      - REDIS_USERNAME=default
+    networks:
+      - foodo-network
+
+networks:
+  foodo-network:
+    driver: bridge
+
+# Using Redis Cloud instead of local Redis
+# volumes:
+#   redis_data:

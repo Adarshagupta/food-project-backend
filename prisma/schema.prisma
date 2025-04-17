@@ -1,0 +1,281 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model
+model User {
+  id            String    @id @default(uuid())
+  firebaseUid   String?   @unique
+  email         String    @unique
+  firstName     String?
+  lastName      String?
+  phoneNumber   String?
+  address       String?
+  profileImage  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  profile       UserProfile?
+  carts         Cart[]
+  orders        Order[]
+  favorites     Favorite[]
+  reviews       Review[]
+  notifications Notification[]
+}
+
+// User profile with additional details
+model UserProfile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio           String?
+  preferences   Json?     // Dietary preferences, favorite cuisines, etc.
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Restaurant model
+model Restaurant {
+  id            String    @id @default(uuid())
+  name          String
+  description   String?
+  address       String
+  city          String
+  state         String?
+  zipCode       String
+  phone         String?
+  email         String?
+  website       String?
+  logoImage     String?
+  coverImage    String?
+  latitude      Float?
+  longitude     Float?
+  rating        Float     @default(0)
+  priceLevel    Int       @default(2) // 1-4 price level
+  isActive      Boolean   @default(true)
+  openingHours  Json?     // JSON object with opening hours
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  categories    CategoryOnRestaurant[]
+  menuItems     MenuItem[]
+  orders        Order[]
+  reviews       Review[]
+  favorites     Favorite[]
+}
+
+// Food category model
+model Category {
+  id            String    @id @default(uuid())
+  name          String    @unique
+  description   String?
+  image         String?
+  emoji         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  restaurants   CategoryOnRestaurant[]
+  menuItems     MenuItem[]
+}
+
+// Many-to-many relation between Category and Restaurant
+model CategoryOnRestaurant {
+  restaurantId  String
+  categoryId    String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  category      Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([restaurantId, categoryId])
+}
+
+// Menu item model
+model MenuItem {
+  id            String    @id @default(uuid())
+  restaurantId  String
+  categoryId    String?
+  name          String
+  description   String?
+  price         Decimal   @db.Decimal(10, 2)
+  image         String?
+  isAvailable   Boolean   @default(true)
+  isPopular     Boolean   @default(false)
+  isVegetarian  Boolean   @default(false)
+  isVegan       Boolean   @default(false)
+  isGlutenFree  Boolean   @default(false)
+  calories      Int?
+  prepTime      Int?      // Preparation time in minutes
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  category      Category?  @relation(fields: [categoryId], references: [id])
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+  reviews       Review[]
+}
+
+// Cart model
+model Cart {
+  id            String    @id @default(uuid())
+  userId        String
+  restaurantId  String?   // Optional: if cart is tied to a specific restaurant
+  status        String    @default("active") // active, abandoned, converted
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items         CartItem[]
+}
+
+// Cart item model
+model CartItem {
+  id            String    @id @default(uuid())
+  cartId        String
+  menuItemId    String
+  quantity      Int       @default(1)
+  specialInstructions String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  cart          Cart      @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  menuItem      MenuItem  @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+}
+
+// Order model
+model Order {
+  id            String    @id @default(uuid())
+  userId        String
+  restaurantId  String
+  orderNumber   String    @unique
+  status        String    @default("pending") // pending, confirmed, preparing, ready, out_for_delivery, delivered, cancelled
+  totalAmount   Decimal   @db.Decimal(10, 2)
+  deliveryFee   Decimal   @db.Decimal(10, 2)
+  tax           Decimal   @db.Decimal(10, 2)
+  tip           Decimal?  @db.Decimal(10, 2)
+  deliveryAddress String?
+  paymentMethod String?
+  paymentStatus String    @default("pending") // pending, paid, failed
+  estimatedDeliveryTime DateTime?
+  actualDeliveryTime   DateTime?
+  specialInstructions  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  user          User      @relation(fields: [userId], references: [id])
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
+  items         OrderItem[]
+  tracking      OrderTracking?
+}
+
+// Order item model
+model OrderItem {
+  id            String    @id @default(uuid())
+  orderId       String
+  menuItemId    String
+  name          String    // Store name at time of order
+  price         Decimal   @db.Decimal(10, 2) // Store price at time of order
+  quantity      Int
+  specialInstructions String?
+  createdAt     DateTime  @default(now())
+
+  // Relations
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem      MenuItem  @relation(fields: [menuItemId], references: [id])
+}
+
+// Order tracking model for real-time updates
+model OrderTracking {
+  id            String    @id @default(uuid())
+  orderId       String    @unique
+  status        String
+  driverId      String?
+  driverName    String?
+  driverPhone   String?
+  driverLocation Json?    // Current location of driver
+  estimatedArrival DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+// Review model
+model Review {
+  id            String    @id @default(uuid())
+  userId        String
+  restaurantId  String
+  menuItemId    String?
+  rating        Int       // 1-5 stars
+  comment       String?
+  images        String[]  // Array of image URLs
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  menuItem      MenuItem? @relation(fields: [menuItemId], references: [id])
+}
+
+// Favorite model (for user's favorite restaurants)
+model Favorite {
+  userId        String
+  restaurantId  String
+  createdAt     DateTime  @default(now())
+
+  // Relations
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@id([userId, restaurantId])
+}
+
+// Promotion model
+model Promotion {
+  id            String    @id @default(uuid())
+  title         String
+  subtitle      String?
+  description   String?
+  code          String?   @unique
+  discountType  String    // percentage, fixed_amount, free_delivery
+  discountValue Decimal?  @db.Decimal(10, 2)
+  minOrderValue Decimal?  @db.Decimal(10, 2)
+  startDate     DateTime
+  endDate       DateTime
+  image         String?
+  color         String?   // For UI styling
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Notification model
+model Notification {
+  id            String    @id @default(uuid())
+  userId        String
+  title         String
+  message       String
+  type          String    // order_update, promotion, system
+  isRead        Boolean   @default(false)
+  data          Json?     // Additional data related to the notification
+  createdAt     DateTime  @default(now())
+
+  // Relations
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

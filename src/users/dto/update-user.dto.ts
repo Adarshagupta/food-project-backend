@@ -2,6 +2,34 @@ import { IsString, IsOptional, IsObject } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateUserDto {
+  @ApiProperty({ example: 28.6139, required: false })
+  @IsOptional()
+  latitude?: number;
+
+  @ApiProperty({ example: 77.2090, required: false })
+  @IsOptional()
+  longitude?: number;
+
+  @ApiProperty({ example: 'Home', required: false })
+  @IsOptional()
+  label?: string;
+
+  @ApiProperty({ example: '123 Main St', required: false })
+  @IsOptional()
+  street?: string;
+
+  @ApiProperty({ example: 'New Delhi', required: false })
+  @IsOptional()
+  city?: string;
+
+  @ApiProperty({ example: 'Delhi', required: false })
+  @IsOptional()
+  state?: string;
+
+  @ApiProperty({ example: '110001', required: false })
+  @IsOptional()
+  postalCode?: string;
+
   @ApiProperty({ example: 'John' })
   @IsString()
   @IsOptional()

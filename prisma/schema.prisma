@@ -18,13 +18,23 @@ model User {
   firstName     String?
   lastName      String?
   phoneNumber   String?
-  address       String?
+  address       String?   // Legacy field, use addresses relation instead
   profileImage  String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  // Location fields for delivery
+  latitude      Float?
+  longitude     Float?
+  label         String?
+  street        String?
+  city          String?
+  state         String?
+  postalCode    String?
+
   // Relations
   profile       UserProfile?
+  addresses     Address[]
   carts         Cart[]
   orders        Order[]
   favorites     Favorite[]
@@ -72,6 +82,7 @@ model Restaurant {
   orders        Order[]
   reviews       Review[]
   favorites     Favorite[]
+  analytics     RestaurantAnalytics[] // <-- Added back-reference for relation
 }
 
 // Food category model
@@ -278,4 +289,87 @@ model Notification {
 
   // Relations
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Address model
+model Address {
+  id            String    @id @default(uuid())
+  userId        String
+  street        String
+  city          String
+  state         String?
+  postalCode    String
+  country       String    @default("USA")
+  isDefault     Boolean   @default(false)
+  label         String?   // e.g., "Home", "Work", etc.
+  latitude      Float?
+  longitude     Float?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Delivery Zone model
+model DeliveryZone {
+  id                    String    @id @default(uuid())
+  name                  String
+  city                  String
+  zipCodes              String    // Comma-separated list of zip codes
+  minOrderAmount        Decimal   @db.Decimal(10, 2)
+  deliveryFee           Decimal   @db.Decimal(10, 2)
+  estimatedDeliveryTime Int       // In minutes
+  isActive              Boolean   @default(true)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([city])
+  @@index([zipCodes])
+}
+
+// Analytics models
+model SalesAnalytics {
+  id                    String    @id @default(uuid())
+  date                  DateTime  @db.Date
+  totalSales            Decimal   @db.Decimal(10, 2)
+  totalOrders           Int
+  averageOrderValue     Decimal   @db.Decimal(10, 2)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([date])
+}
+
+model RestaurantAnalytics {
+  id                    String    @id @default(uuid())
+  restaurantId          String
+  date                  DateTime  @db.Date
+  totalOrders           Int
+  totalRevenue          Decimal   @db.Decimal(10, 2)
+  averageRating         Float
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  // Relations
+  restaurant            Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, date])
+}
+
+model DeliveryAnalytics {
+  id                    String    @id @default(uuid())
+  date                  DateTime  @db.Date
+  averageDeliveryTime   Float     // In minutes
+  onTimeDeliveryRate    Float     // Percentage
+  averagePreparationTime Float    // In minutes
+  averageDeliveryDistance Float   // In kilometers
+  totalDeliveries       Int
+  customerSatisfactionRate Float  // Rating out of 5
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([date])
 }

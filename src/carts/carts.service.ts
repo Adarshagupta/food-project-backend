@@ -125,7 +125,7 @@ export class CartsService {
         },
       });
 
-      return updatedItem;
+      return this.getCurrentCart(userId);
     }
 
     // Add new item to cart
@@ -141,7 +141,7 @@ export class CartsService {
       },
     });
 
-    return cartItem;
+    return this.getCurrentCart(userId);
   }
 
   async updateItem(userId: string, updateCartItemDto: UpdateCartItemDto) {
@@ -174,7 +174,7 @@ export class CartsService {
       },
     });
 
-    return updatedItem;
+    return this.getCurrentCart(userId);
   }
 
   async removeItem(userId: string, removeCartItemDto: RemoveCartItemDto) {

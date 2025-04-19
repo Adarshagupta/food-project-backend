@@ -91,16 +91,16 @@ async function main() {
       name: 'Pizza Palace',
       description: 'The best pizza in town',
       address: '123 Main St',
-      city: 'New York',
-      state: 'NY',
-      zipCode: '10001',
+      city: 'Anywhere',
+      state: 'AnyState',
+      zipCode: '000000',
       phone: '+1234567890',
       email: 'contact@pizzapalace.com',
       website: 'https://pizzapalace.com',
       logoImage: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&h=300&fit=crop',
       coverImage: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=1000&h=400&fit=crop',
-      latitude: 40.7128,
-      longitude: -74.006,
+      latitude: 20.0,
+      longitude: 78.0,
       rating: 4.5,
       priceLevel: 2,
       isActive: true,
@@ -133,16 +133,16 @@ async function main() {
       name: 'Burger Joint',
       description: 'Juicy burgers and crispy fries',
       address: '456 Elm St',
-      city: 'New York',
-      state: 'NY',
-      zipCode: '10002',
+      city: 'Anywhere',
+      state: 'AnyState',
+      zipCode: '000000',
       phone: '+1234567891',
       email: 'contact@burgerjoint.com',
       website: 'https://burgerjoint.com',
       logoImage: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&h=300&fit=crop',
       coverImage: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=1000&h=400&fit=crop',
-      latitude: 40.7129,
-      longitude: -74.007,
+      latitude: 20.0,
+      longitude: 78.0,
       rating: 4.3,
       priceLevel: 2,
       isActive: true,
@@ -167,7 +167,55 @@ async function main() {
     },
   });
 
-  console.log('Restaurants created:', 2);
+  // Add SRM University Guntur restaurant
+  const srmCampusCafe = await prisma.restaurant.upsert({
+    where: { id: '7' },
+    update: {},
+    create: {
+      id: '7',
+      name: 'SRM Campus Cafe',
+      description: 'Delicious campus food near SRM University',
+      address: 'SRM University Campus, Neerukonda',
+      city: 'Guntur',
+      state: 'Andhra Pradesh',
+      zipCode: '522503',
+      phone: '+919876543210',
+      email: 'campus.cafe@srm.edu.in',
+      website: 'https://www.srmuniversity.ac.in',
+      logoImage: 'https://images.unsplash.com/photo-1567521464027-f127ff144326?w=300&h=300&fit=crop',
+      coverImage: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1000&h=400&fit=crop',
+      latitude: 16.4981,
+      longitude: 80.6482,
+      rating: 4.2,
+      priceLevel: 1,
+      isActive: true,
+      openingHours: {
+        monday: { open: '08:00', close: '22:00' },
+        tuesday: { open: '08:00', close: '22:00' },
+        wednesday: { open: '08:00', close: '22:00' },
+        thursday: { open: '08:00', close: '22:00' },
+        friday: { open: '08:00', close: '22:00' },
+        saturday: { open: '09:00', close: '20:00' },
+        sunday: { open: '10:00', close: '18:00' },
+      },
+      categories: {
+        create: [
+          {
+            category: {
+              connect: { name: 'Healthy' },
+            },
+          },
+          {
+            category: {
+              connect: { name: 'Breakfast' },
+            },
+          },
+        ],
+      },
+    },
+  });
+
+  console.log('Restaurants created:', [pizzaPlace, burgerJoint, srmCampusCafe].length);
 
   // Create menu items for Pizza Palace
   const pizzaMenuItems = await Promise.all([

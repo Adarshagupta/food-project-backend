@@ -66,8 +66,36 @@ export class RestaurantsService {
   }
 
   async findNearby(findNearbyDto: FindNearbyDto) {
-    const { lat, lng, radius = 5 } = findNearbyDto;
+    const { lat, lng, radius = 5, postcode } = findNearbyDto;
 
+    // If postcode is provided, search by postcode
+    if (postcode) {
+      console.log(`Searching for restaurants with postcode: ${postcode}`);
+      const restaurants = await this.prisma.restaurant.findMany({
+        where: {
+          zipCode: postcode,
+          isActive: true,
+        },
+        include: {
+          categories: {
+            include: {
+              category: true,
+            },
+          },
+        },
+      });
+
+      console.log(`Found ${restaurants.length} restaurants with postcode ${postcode}`);
+      return restaurants;
+    }
+    
+    // Otherwise search by lat/lng
+    if (!lat || !lng) {
+      throw new Error('Either postcode or lat/lng coordinates must be provided');
+    }
+
+    console.log(`Searching for restaurants near lat: ${lat}, lng: ${lng}, radius: ${radius}km`);
+    
     // Convert radius from kilometers to degrees (approximate)
     // 1 degree of latitude = ~111 km
     const latRadius = radius / 111;

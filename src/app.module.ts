@@ -16,6 +16,7 @@ import { LocationModule } from './location/location.module';
 import { AddressesModule } from './addresses/addresses.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { DeliveryZonesModule } from './delivery-zones/delivery-zones.module';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { DeliveryZonesModule } from './delivery-zones/delivery-zones.module';
     PromotionsModule,
     LocationModule,
     AnalyticsModule,
+    CategoriesModule,
   ],
   controllers: [],
   providers: [],
